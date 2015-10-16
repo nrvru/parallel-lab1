@@ -258,4 +258,7 @@ void ScalarProduct(int vector_size, bool is_print_vectors) {
     elapsedTime = chrono::duration_cast<chrono::milliseconds>(end - start).count();
     cout << endl << "Время параллельного расчета скалярного произведения (cascade):" << elapsedTime << "ms" << endl;
     cout << "Скалярное произведение равно: " + std::to_string(product) << endl;
+
+    delete vectorA;
+    delete vectorB;
 }
