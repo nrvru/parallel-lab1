@@ -9,29 +9,38 @@ using namespace std;
 
 int REPETITIONS = 10;
 
+int MAX_THREADS = 16;
+
 void MaxVectorElement(int vector_size = 1000000000, bool is_print_vector = false);
 
 void MatrixMultiplication(int matrix_size = 1000, bool is_print_matrices = false);
 
 void ScalarProduct(int vector_size = 1000000000, bool is_print_vectors = false);
 
+string vectorToString(int *vector, int size);
+string vectorToString(float *vector, int size);
+
 int main() {
     cout << "Лабораторная работа №1" << endl;
 
     MaxVectorElement();
 
-    MatrixMultiplication();
+//    MatrixMultiplication();
 
-    ScalarProduct();
+//    ScalarProduct();
 
     return 0;
 }
 
 void MaxVectorElement(int vector_size, bool is_print_vector) {
     chrono::time_point<chrono::system_clock> start, end;
-    int max = 0, elapsedTime, meanTime, i;
+    int max = 0, elapsedTime, meanTime, i, z;
 
-    int threads_numbers[5] = {1, 2, 4, 8, 16};
+    int resultTimes[MAX_THREADS];
+    float acceleration[MAX_THREADS];
+    float efficiency[MAX_THREADS];
+
+//    int threads_numbers[5] = {1, 2, 4, 8, 16};
 
     cout << "Поиск максимального значения вектора" << endl;
 
@@ -55,28 +64,41 @@ void MaxVectorElement(int vector_size, bool is_print_vector) {
         meanTime += chrono::duration_cast<chrono::milliseconds>(end - start).count();
     }
     meanTime /= REPETITIONS;
-
+    resultTimes[0] = meanTime;
+    acceleration[0] = efficiency[0] = 1;
     cout << endl << "Среднее время выполнения:" << meanTime << "ms" << endl;
     cout << "Максимальное значение вектора равно: " + to_string(max) << endl;
 
 
     // Многопоточная версия
-    for(int z = 0; z < 5; z++) {
+    int threads_number;
+    for(z = 1; z < MAX_THREADS; z++) {
+        threads_number = z + 1;
+
         meanTime = 0;
         for (i = 0; i < REPETITIONS; i++) {
             max = 0;
             start = chrono::system_clock::now();
-            max = random_vector->MaxElement(threads_numbers[z]);
+            max = random_vector->MaxElement(threads_number);
             end = chrono::system_clock::now();
             meanTime += chrono::duration_cast<chrono::milliseconds>(end - start).count();
         }
         meanTime /= REPETITIONS;
 
-        cout << endl << "Среднее время выполнения (" + std::to_string(threads_numbers[z]) +
-                " поток" + (threads_numbers[z] == 1 ? "" : (threads_numbers[z] == 2 || threads_numbers[z] == 4) ? "а" : "ов") +
+        resultTimes[z] = meanTime;
+        acceleration[z] = (float)resultTimes[0]/resultTimes[z];
+        efficiency[z] = acceleration[z]/(threads_number);
+
+        cout << endl << "Среднее время выполнения (" + std::to_string(threads_number) +
+                " поток" + (threads_number == 1 ? "" : (threads_number > 1 && threads_number < 5) ? "а" : "ов") +
                 "):" << meanTime << "ms" << endl;
         cout << "Максимальное значение вектора равно (parallel): " + to_string(max) << endl;
     }
+
+    cout << "Итоговые результаты:"  << endl;
+    cout << "Время выполнения: " << vectorToString(resultTimes, MAX_THREADS) << endl;
+    cout << "Коэффициент ускорения: " << vectorToString(acceleration, MAX_THREADS) << endl;
+    cout << "Коэффициент эффективности: " << vectorToString(efficiency, MAX_THREADS) << endl;
 
     delete random_vector;
 }
@@ -261,4 +283,22 @@ void ScalarProduct(int vector_size, bool is_print_vectors) {
 
     delete vectorA;
     delete vectorB;
+}
+
+string vectorToString(int *vector, int size) {
+    string str = "";
+    for(int z = 0; z < size; z++){
+        str += to_string(vector[z]) + ((z == size - 1) ? "" : ", ");
+    }
+
+    return str;
+}
+
+string vectorToString(float *vector, int size) {
+    string str = "";
+    for(int z = 0; z < size; z++){
+        str += to_string(vector[z]) + ((z == size - 1) ? "" : ", ");
+    }
+
+    return str;
 }

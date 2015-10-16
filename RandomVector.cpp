@@ -26,8 +26,9 @@ void RandomVector::GenerateVector() {
 }
 
 int RandomVector::MaxElement() {
-    int max = 0;
-    for(int i = 0; i < vector_size; i++) {
+    int max = 0, i;
+
+    for(i = 0; i < vector_size; i++) {
         if(vector[i] > max) {
             max = vector[i];
         }
