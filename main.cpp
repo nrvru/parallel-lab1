@@ -7,7 +7,7 @@
 
 using namespace std;
 
-int REPETITIONS = 10;
+int REPETITIONS = 2;
 
 int MAX_THREADS = 16;
 
@@ -23,9 +23,9 @@ string vectorToString(float *vector, int size);
 int main() {
     cout << "Лабораторная работа №1" << endl;
 
-    MaxVectorElement();
+//    MaxVectorElement();
 
-//    MatrixMultiplication();
+    MatrixMultiplication();
 
 //    ScalarProduct();
 
@@ -39,8 +39,6 @@ void MaxVectorElement(int vector_size, bool is_print_vector) {
     int resultTimes[MAX_THREADS];
     float acceleration[MAX_THREADS];
     float efficiency[MAX_THREADS];
-
-//    int threads_numbers[5] = {1, 2, 4, 8, 16};
 
     cout << "Поиск максимального значения вектора" << endl;
 
@@ -62,12 +60,12 @@ void MaxVectorElement(int vector_size, bool is_print_vector) {
         max = random_vector->MaxElement();
         end = chrono::system_clock::now();
         meanTime += chrono::duration_cast<chrono::milliseconds>(end - start).count();
+        cout << "Максимальное значение вектора равно: " + to_string(max) << endl;
     }
     meanTime /= REPETITIONS;
     resultTimes[0] = meanTime;
     acceleration[0] = efficiency[0] = 1;
     cout << endl << "Среднее время выполнения:" << meanTime << "ms" << endl;
-    cout << "Максимальное значение вектора равно: " + to_string(max) << endl;
 
 
     // Многопоточная версия
@@ -82,6 +80,7 @@ void MaxVectorElement(int vector_size, bool is_print_vector) {
             max = random_vector->MaxElement(threads_number);
             end = chrono::system_clock::now();
             meanTime += chrono::duration_cast<chrono::milliseconds>(end - start).count();
+            cout << "Максимальное значение вектора равно (parallel): " + to_string(max) << endl;
         }
         meanTime /= REPETITIONS;
 
@@ -92,7 +91,6 @@ void MaxVectorElement(int vector_size, bool is_print_vector) {
         cout << endl << "Среднее время выполнения (" + std::to_string(threads_number) +
                 " поток" + (threads_number == 1 ? "" : (threads_number > 1 && threads_number < 5) ? "а" : "ов") +
                 "):" << meanTime << "ms" << endl;
-        cout << "Максимальное значение вектора равно (parallel): " + to_string(max) << endl;
     }
 
     cout << "Итоговые результаты:"  << endl;
@@ -105,8 +103,12 @@ void MaxVectorElement(int vector_size, bool is_print_vector) {
 
 void MatrixMultiplication(int matrix_size, bool is_print_matrices){
     chrono::time_point<chrono::system_clock> start, end;
-    int elapsedTime, meanTime, i;
+    int elapsedTime, meanTime, i, x;
     SquareMatrix *result;
+
+    int resultTimes[MAX_THREADS];
+    float acceleration[MAX_THREADS];
+    float efficiency[MAX_THREADS];
 
     cout << "Произведение матриц" << endl;
 
@@ -115,127 +117,49 @@ void MatrixMultiplication(int matrix_size, bool is_print_matrices){
     SquareMatrix * matrix2 = new SquareMatrix(matrix_size);
     end = chrono::system_clock::now();
     elapsedTime = chrono::duration_cast<chrono::milliseconds>(end - start).count();
-    cout << "Время генерации матриц:" << elapsedTime << "ms" << endl;
+    cout << "Время генерации матриц:" << elapsedTime << "ms" << endl << endl;
 
     if(is_print_matrices){
         cout << "Матрица А:\n" + matrix1->ToString() << endl;
         cout << "Матрица B:\n" + matrix2->ToString() << endl;
     }
 
-    // Однопоточная версия
+
+    cout << "Однопоточная версия" << endl;
     meanTime = 0;
     for(i = 0; i < REPETITIONS; i++) {
         start = chrono::system_clock::now();
         result = matrix1->MatrixMultiply(matrix2);
         end = chrono::system_clock::now();
         meanTime += chrono::duration_cast<chrono::milliseconds>(end - start).count();
+        cout << "Норма матрицы: " << result->GetNorm() << endl;
+        delete result;
     }
     meanTime /= REPETITIONS;
-    cout << endl << "Среднее время выполнения умножения: " << meanTime << "ms" << endl;
-    cout << "Норма матрицы: " << result->GetNorm() << endl;
+    cout << "Среднее время выполнения умножения: " << meanTime << "ms" << endl << endl;
 
 
-
-    // Многопоточная версия IJK
-    meanTime = 0;
-    for(i = 0; i < REPETITIONS; i++) {
-        start = chrono::system_clock::now();
-        result = matrix1->MatrixMultiplyParallel(matrix2);
-        end = chrono::system_clock::now();
-        meanTime += chrono::duration_cast<chrono::milliseconds>(end - start).count();
-    }
-    meanTime /= REPETITIONS;
-    cout << endl << "Среднее время выполнения многопоточного умножения IJK: " << meanTime << "ms" << endl;
-    cout << "Норма матрицы: " << result->GetNorm() << endl;
-
-    if(is_print_matrices){
-        cout << "Матрица C:\n" + result->ToString() << endl;
-    }
-
-
-    // Многопоточная версия IKJ
-    meanTime = 0;
-    for(i = 0; i < REPETITIONS; i++) {
-        start = chrono::system_clock::now();
-        result = matrix1->MatrixMultiplyParallelIKJ(matrix2);
-        end = chrono::system_clock::now();
-        meanTime += chrono::duration_cast<chrono::milliseconds>(end - start).count();
-    }
-    meanTime /= REPETITIONS;
-    cout << endl << "Среднее время выполнения многопоточного умножения IKJ: " << meanTime << "ms" << endl;
-    cout << "Норма матрицы: " << result->GetNorm() << endl;
-
-    if(is_print_matrices){
-        cout << "Матрица C:\n" + result->ToString() << endl;
-    }
-
-    // Многопоточная версия KIJ
-    meanTime = 0;
-    for(i = 0; i < REPETITIONS; i++) {
-        start = chrono::system_clock::now();
-        result = matrix1->MatrixMultiplyParallelKIJ(matrix2);
-        end = chrono::system_clock::now();
-        meanTime += chrono::duration_cast<chrono::milliseconds>(end - start).count();
-    }
-    meanTime /= REPETITIONS;
-    cout << endl << "Среднее время выполнения многопоточного умножения KIJ: " << meanTime << "ms" << endl;
-    cout << "Норма матрицы: " << result->GetNorm() << endl;
-
-    if(is_print_matrices){
-        cout << "Матрица C:\n" + result->ToString() << endl;
-    }
-
-    // Многопоточная версия JKI
-    meanTime = 0;
-    for(i = 0; i < REPETITIONS; i++) {
-        start = chrono::system_clock::now();
-        result = matrix1->MatrixMultiplyParallelJKI(matrix2);
-        end = chrono::system_clock::now();
-        meanTime += chrono::duration_cast<chrono::milliseconds>(end - start).count();
-    }
-    meanTime /= REPETITIONS;
-    cout << endl << "Среднее время выполнения многопоточного умножения JKI: " << meanTime << "ms" << endl;
-    cout << "Норма матрицы: " << result->GetNorm() << endl;
-
-    if(is_print_matrices){
-        cout << "Матрица C:\n" + result->ToString() << endl;
-    }
-
-    // Многопоточная версия JIK
-    meanTime = 0;
-    for(i = 0; i < REPETITIONS; i++) {
-        start = chrono::system_clock::now();
-        result = matrix1->MatrixMultiplyParallelJIK(matrix2);
-        end = chrono::system_clock::now();
-        meanTime += chrono::duration_cast<chrono::milliseconds>(end - start).count();
-    }
-    meanTime /= REPETITIONS;
-    cout << endl << "Среднее время выполнения многопоточного умножения JIK: " << meanTime << "ms" << endl;
-    cout << "Норма матрицы: " << result->GetNorm() << endl;
-
-    if(is_print_matrices){
-        cout << "Матрица C:\n" + result->ToString() << endl;
-    }
-
-    // Многопоточная версия KJI
-    meanTime = 0;
-    for(i = 0; i < REPETITIONS; i++) {
-        start = chrono::system_clock::now();
-        result = matrix1->MatrixMultiplyParallelKJI(matrix2);
-        end = chrono::system_clock::now();
-        meanTime += chrono::duration_cast<chrono::milliseconds>(end - start).count();
-    }
-    meanTime /= REPETITIONS;
-    cout << endl << "Среднее время выполнения многопоточного умножения KJI: " << meanTime << "ms" << endl;
-    cout << "Норма матрицы: " << result->GetNorm() << endl;
-
-    if(is_print_matrices){
-        cout << "Матрица C:\n" + result->ToString() << endl;
+    cout << "Многопоточная версия" << endl;
+    for(x = 0; x < NUMBER_OF_MULTIPLY_TYPES; x++) {
+        cout << "Выриант алгоритма " << getTextForMatrixMultiplyType(x) << endl;
+        meanTime = 0;
+        for (i = 0; i < REPETITIONS; i++) {
+            start = chrono::system_clock::now();
+            result = matrix1->MatrixMultiplyParallel(matrix2, MatrixMultiplyType(x));
+            end = chrono::system_clock::now();
+            meanTime += chrono::duration_cast<chrono::milliseconds>(end - start).count();
+            cout << "Норма матрицы: " << result->GetNorm() << endl;
+            if (is_print_matrices) {
+                cout << "Матрица C:\n" + result->ToString() << endl;
+            }
+            delete result;
+        }
+        meanTime /= REPETITIONS;
+        cout << "Среднее время выполнения многопоточного умножения " << getTextForMatrixMultiplyType(x) << ": " << meanTime << "ms" << endl << endl;
     }
 
     delete matrix1;
     delete matrix2;
-    delete result;
 }
 
 void ScalarProduct(int vector_size, bool is_print_vectors) {

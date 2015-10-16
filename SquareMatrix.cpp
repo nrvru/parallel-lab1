@@ -28,22 +28,43 @@ SquareMatrix::~SquareMatrix() {
     delete [] data;
 }
 
-SquareMatrix * SquareMatrix::MatrixMultiply(SquareMatrix *multiplierMatrix) {
+SquareMatrix * SquareMatrix::MatrixMultiply(SquareMatrix *multiplierMatrix, MatrixMultiplyType multiply_type) {
+    SquareMatrix *result_matrix;
+
+    switch (multiply_type){
+        case IJK:
+            result_matrix = this->MatrixMultiplyIJK(multiplierMatrix);
+            break;
+        case IKJ:
+            result_matrix = this->MatrixMultiplyIKJ(multiplierMatrix);
+            break;
+        case JKI:
+            result_matrix = this->MatrixMultiplyJKI(multiplierMatrix);
+            break;
+        case JIK:
+            result_matrix = this->MatrixMultiplyJIK(multiplierMatrix);
+            break;
+        case KIJ:
+            result_matrix = this->MatrixMultiplyKIJ(multiplierMatrix);
+            break;
+        case KJI:
+            result_matrix = this->MatrixMultiplyKJI(multiplierMatrix);
+            break;
+    }
+
+    return result_matrix;
+}
+
+SquareMatrix *SquareMatrix::MatrixMultiplyIJK(SquareMatrix *multiplierMatrix) {
     int i, j, k, **result;
     int **multiplier = multiplierMatrix->get_data();
 
-    result = new int*[matrix_size];
-    for(i = 0; i < matrix_size; i++) {
-        result[i] = new int[matrix_size];
-    }
+    result = createZeroMatrix(matrix_size);
 
-    for(i = 0; i < matrix_size; i++) {
-        for (j = 0; j < matrix_size; j++) {
-            result[i][j] = 0;
+    for(i = 0; i < matrix_size; i++)
+        for (j = 0; j < matrix_size; j++)
             for (k = 0; k < matrix_size; k++)
                 result[i][j] += (data[i][k] * multiplier[k][j]);
-        }
-    }
 
     SquareMatrix *result_matrix = new SquareMatrix();
     result_matrix->set_data(result, matrix_size);
@@ -51,20 +72,127 @@ SquareMatrix * SquareMatrix::MatrixMultiply(SquareMatrix *multiplierMatrix) {
     return result_matrix;
 }
 
-SquareMatrix * SquareMatrix::MatrixMultiplyParallel(SquareMatrix *multiplierMatrix) {
+SquareMatrix *SquareMatrix::MatrixMultiplyIKJ(SquareMatrix *multiplierMatrix) {
+    int i, j, k, **result;
+    int **multiplier = multiplierMatrix->get_data();
+
+    result = createZeroMatrix(matrix_size);
+
+    for(i = 0; i < matrix_size; i++)
+        for (k = 0; k < matrix_size; k++)
+            for (j = 0; j < matrix_size; j++)
+                result[i][j] += (data[i][k] * multiplier[k][j]);
+
+    SquareMatrix *result_matrix = new SquareMatrix();
+    result_matrix->set_data(result, matrix_size);
+
+    return result_matrix;
+}
+
+SquareMatrix *SquareMatrix::MatrixMultiplyJIK(SquareMatrix *multiplierMatrix) {
+    int i, j, k, **result;
+    int **multiplier = multiplierMatrix->get_data();
+
+    result = createZeroMatrix(matrix_size);
+
+    for (j = 0; j < matrix_size; j++)
+        for(i = 0; i < matrix_size; i++)
+            for (k = 0; k < matrix_size; k++)
+                result[i][j] += (data[i][k] * multiplier[k][j]);
+
+    SquareMatrix *result_matrix = new SquareMatrix();
+    result_matrix->set_data(result, matrix_size);
+
+    return result_matrix;
+}
+
+SquareMatrix *SquareMatrix::MatrixMultiplyJKI(SquareMatrix *multiplierMatrix) {
+    int i, j, k, **result;
+    int **multiplier = multiplierMatrix->get_data();
+
+    result = createZeroMatrix(matrix_size);
+
+    for (j = 0; j < matrix_size; j++)
+        for (k = 0; k < matrix_size; k++)
+            for(i = 0; i < matrix_size; i++)
+                result[i][j] += (data[i][k] * multiplier[k][j]);
+
+    SquareMatrix *result_matrix = new SquareMatrix();
+    result_matrix->set_data(result, matrix_size);
+
+    return result_matrix;
+}
+
+SquareMatrix *SquareMatrix::MatrixMultiplyKIJ(SquareMatrix *multiplierMatrix) {
+    int i, j, k, **result;
+    int **multiplier = multiplierMatrix->get_data();
+
+    result = createZeroMatrix(matrix_size);
+
+    for (k = 0; k < matrix_size; k++)
+        for(i = 0; i < matrix_size; i++)
+            for (j = 0; j < matrix_size; j++)
+                result[i][j] += (data[i][k] * multiplier[k][j]);
+
+    SquareMatrix *result_matrix = new SquareMatrix();
+    result_matrix->set_data(result, matrix_size);
+
+    return result_matrix;
+}
+
+SquareMatrix *SquareMatrix::MatrixMultiplyKJI(SquareMatrix *multiplierMatrix) {
+    int i, j, k, **result;
+    int **multiplier = multiplierMatrix->get_data();
+
+    result = createZeroMatrix(matrix_size);
+
+    for (k = 0; k < matrix_size; k++)
+        for (j = 0; j < matrix_size; j++)
+            for(i = 0; i < matrix_size; i++)
+                result[i][j] += (data[i][k] * multiplier[k][j]);
+
+    SquareMatrix *result_matrix = new SquareMatrix();
+    result_matrix->set_data(result, matrix_size);
+
+    return result_matrix;
+}
+
+SquareMatrix *SquareMatrix::MatrixMultiplyParallel(SquareMatrix *multiplier, MatrixMultiplyType multiply_type,
+                                                   int threads_number) {
+    SquareMatrix *result_matrix;
+
+    switch (multiply_type){
+        case IJK:
+            result_matrix = this->MatrixMultiplyParallelIJK(multiplier, threads_number);
+            break;
+        case IKJ:
+            result_matrix = this->MatrixMultiplyParallelIKJ(multiplier, threads_number);
+            break;
+        case JKI:
+            result_matrix = this->MatrixMultiplyParallelJKI(multiplier, threads_number);
+            break;
+        case JIK:
+            result_matrix = this->MatrixMultiplyParallelJIK(multiplier, threads_number);
+            break;
+        case KIJ:
+            result_matrix = this->MatrixMultiplyParallelKIJ(multiplier, threads_number);
+            break;
+        case KJI:
+            result_matrix = this->MatrixMultiplyParallelKJI(multiplier, threads_number);
+            break;
+    }
+
+    return result_matrix;
+}
+
+SquareMatrix * SquareMatrix::MatrixMultiplyParallelIJK(SquareMatrix *multiplierMatrix, int threads_number) {
     int i, j, k, **result;
     int matrix_size = this->matrix_size;
     int **data = this->data, **multiplier = multiplierMatrix->get_data();
 
-    result = new int*[matrix_size];
-    for(i = 0; i < matrix_size; i++) {
-        result[i] = new int[matrix_size];
-        for(j = 0; j < matrix_size; j++){
-            result[i][j] = 0;
-        }
-    }
+    result = createZeroMatrix(matrix_size);
 
-    omp_set_num_threads(TREADS_NUMBER);
+    omp_set_num_threads(threads_number);
 #pragma omp parallel for shared(matrix_size, data, multiplier, result) private(i, j, k)
     for(i = 0; i < matrix_size; i++)
         for (j = 0; j < matrix_size; j++)
@@ -77,20 +205,14 @@ SquareMatrix * SquareMatrix::MatrixMultiplyParallel(SquareMatrix *multiplierMatr
     return result_matrix;
 }
 
-SquareMatrix * SquareMatrix::MatrixMultiplyParallelIKJ(SquareMatrix *multiplierMatrix) {
+SquareMatrix * SquareMatrix::MatrixMultiplyParallelIKJ(SquareMatrix *multiplierMatrix, int threads_number) {
     int i, j, k, **result;
     int matrix_size = this->matrix_size;
     int **data = this->data, **multiplier = multiplierMatrix->get_data();
 
-    result = new int*[matrix_size];
-    for(i = 0; i < matrix_size; i++) {
-        result[i] = new int[matrix_size];
-        for(j = 0; j < matrix_size; j++) {
-            result[i][j] = 0;
-        }
-    }
+    result = createZeroMatrix(matrix_size);
 
-    omp_set_num_threads(TREADS_NUMBER);
+    omp_set_num_threads(threads_number);
 #pragma omp parallel for shared(matrix_size, data, multiplier, result) private(i, j, k)
     for(i = 0; i < matrix_size; i++)
         for (k = 0; k < matrix_size; k++)
@@ -103,20 +225,14 @@ SquareMatrix * SquareMatrix::MatrixMultiplyParallelIKJ(SquareMatrix *multiplierM
     return result_matrix;
 }
 
-SquareMatrix * SquareMatrix::MatrixMultiplyParallelKIJ(SquareMatrix *multiplierMatrix) {
+SquareMatrix * SquareMatrix::MatrixMultiplyParallelKIJ(SquareMatrix *multiplierMatrix, int threads_number) {
     int i, j, k, **result;
     int matrix_size = this->matrix_size;
     int **data = this->data, **multiplier = multiplierMatrix->get_data();
 
-    result = new int*[matrix_size];
-    for(i = 0; i < matrix_size; i++) {
-        result[i] = new int[matrix_size];
-        for(j = 0; j < matrix_size; j++) {
-            result[i][j] = 0;
-        }
-    }
+    result = createZeroMatrix(matrix_size);
 
-    omp_set_num_threads(TREADS_NUMBER);
+    omp_set_num_threads(threads_number);
 #pragma omp parallel for shared(matrix_size, data, multiplier, result) private(i, j, k)
     for (k = 0; k < matrix_size; k++)
         for(i = 0; i < matrix_size; i++)
@@ -131,20 +247,14 @@ SquareMatrix * SquareMatrix::MatrixMultiplyParallelKIJ(SquareMatrix *multiplierM
     return result_matrix;
 }
 
-SquareMatrix * SquareMatrix::MatrixMultiplyParallelJKI(SquareMatrix *multiplierMatrix) {
+SquareMatrix * SquareMatrix::MatrixMultiplyParallelJKI(SquareMatrix *multiplierMatrix, int threads_number) {
     int i, j, k, **result;
     int matrix_size = this->matrix_size;
     int **data = this->data, **multiplier = multiplierMatrix->get_data();
 
-    result = new int*[matrix_size];
-    for(i = 0; i < matrix_size; i++) {
-        result[i] = new int[matrix_size];
-        for(j = 0; j < matrix_size; j++) {
-            result[i][j] = 0;
-        }
-    }
+    result = createZeroMatrix(matrix_size);
 
-    omp_set_num_threads(TREADS_NUMBER);
+    omp_set_num_threads(threads_number);
 #pragma omp parallel for shared(matrix_size, data, multiplier, result) private(i, j, k)
     for (j = 0; j < matrix_size; j++)
         for (k = 0; k < matrix_size; k++)
@@ -157,20 +267,14 @@ SquareMatrix * SquareMatrix::MatrixMultiplyParallelJKI(SquareMatrix *multiplierM
     return result_matrix;
 }
 
-SquareMatrix * SquareMatrix::MatrixMultiplyParallelJIK(SquareMatrix *multiplierMatrix) {
+SquareMatrix * SquareMatrix::MatrixMultiplyParallelJIK(SquareMatrix *multiplierMatrix, int threads_number) {
     int i, j, k, **result;
     int matrix_size = this->matrix_size;
     int **data = this->data, **multiplier = multiplierMatrix->get_data();
 
-    result = new int*[matrix_size];
-    for(i = 0; i < matrix_size; i++) {
-        result[i] = new int[matrix_size];
-        for(j = 0; j < matrix_size; j++) {
-            result[i][j] = 0;
-        }
-    }
+    result = createZeroMatrix(matrix_size);
 
-    omp_set_num_threads(TREADS_NUMBER);
+    omp_set_num_threads(threads_number);
 #pragma omp parallel for shared(matrix_size, data, multiplier, result) private(i, j, k)
     for (j = 0; j < matrix_size; j++)
         for(i = 0; i < matrix_size; i++)
@@ -183,20 +287,14 @@ SquareMatrix * SquareMatrix::MatrixMultiplyParallelJIK(SquareMatrix *multiplierM
     return result_matrix;
 }
 
-SquareMatrix * SquareMatrix::MatrixMultiplyParallelKJI(SquareMatrix *multiplierMatrix) {
+SquareMatrix * SquareMatrix::MatrixMultiplyParallelKJI(SquareMatrix *multiplierMatrix, int threads_number) {
     int i, j, k, **result;
     int matrix_size = this->matrix_size;
     int **data = this->data, **multiplier = multiplierMatrix->get_data();
 
-    result = new int*[matrix_size];
-    for(i = 0; i < matrix_size; i++) {
-        result[i] = new int[matrix_size];
-        for(j = 0; j < matrix_size; j++) {
-            result[i][j] = 0;
-        }
-    }
+    result = createZeroMatrix(matrix_size);
 
-    omp_set_num_threads(TREADS_NUMBER);
+    omp_set_num_threads(threads_number);
 #pragma omp parallel for shared(matrix_size, data, multiplier, result) private(i, j, k)
     for (k = 0; k < matrix_size; k++)
         for (j = 0; j < matrix_size; j++)
@@ -227,15 +325,7 @@ int SquareMatrix::GetNorm() {
 }
 
 void SquareMatrix::InitMatrix() {
-    int i, j;
-    data = new int*[matrix_size];
-
-    for(i = 0; i < matrix_size; i++) {
-        data[i] = new int[matrix_size];
-        for(j = 0; j < matrix_size; j++){
-            data[i][j] = 0;
-        }
-    }
+    data = createZeroMatrix(matrix_size);
 }
 
 void SquareMatrix::FillRandomData(
@@ -284,4 +374,19 @@ void SquareMatrix::set_data(int **data, int matrix_size) {
     this->matrix_size = matrix_size;
 }
 
+
+int **SquareMatrix::createZeroMatrix(int matrix_size) {
+    int i, j;
+    int **zeroMatrix = new int*[matrix_size];
+
+    for(i = 0; i < matrix_size; i++) {
+        zeroMatrix[i] = new int[matrix_size];
+        for(j = 0; j < matrix_size; j++) {
+            zeroMatrix[i][j] = 0;
+        }
+    }
+    return zeroMatrix;
+}
+
+const char * getTextForMatrixMultiplyType( int enumVal ) { return MatrixMultiplyTypeStrings[enumVal]; }
 
