@@ -7,7 +7,7 @@
 
 using namespace std;
 
-int REPETITIONS = 2;
+int REPETITIONS = 10;
 
 int MAX_THREADS = 16;
 
@@ -19,15 +19,16 @@ void ScalarProduct(int vector_size = 1000000000, bool is_print_vectors = false);
 
 string vectorToString(int *vector, int size);
 string vectorToString(float *vector, int size);
+string pluralizeThreads(int threads_number);
 
 int main() {
     cout << "Лабораторная работа №1" << endl;
 
-//    MaxVectorElement();
+    MaxVectorElement();
 
     MatrixMultiplication();
 
-//    ScalarProduct();
+    ScalarProduct();
 
     return 0;
 }
@@ -86,11 +87,10 @@ void MaxVectorElement(int vector_size, bool is_print_vector) {
 
         resultTimes[z] = meanTime;
         acceleration[z] = (float)resultTimes[0]/resultTimes[z];
-        efficiency[z] = acceleration[z]/(threads_number);
+        efficiency[z] = acceleration[z]/threads_number;
 
-        cout << endl << "Среднее время выполнения (" + std::to_string(threads_number) +
-                " поток" + (threads_number == 1 ? "" : (threads_number > 1 && threads_number < 5) ? "а" : "ов") +
-                "):" << meanTime << "ms" << endl;
+        cout << endl << "Среднее время выполнения (" + pluralizeThreads(threads_number) +
+                                "):" << meanTime << "ms" << endl;
     }
 
     cout << "Итоговые результаты:"  << endl;
@@ -103,12 +103,12 @@ void MaxVectorElement(int vector_size, bool is_print_vector) {
 
 void MatrixMultiplication(int matrix_size, bool is_print_matrices){
     chrono::time_point<chrono::system_clock> start, end;
-    int elapsedTime, meanTime, i, x;
+    int elapsedTime, meanTime, i, x, y, threads_number;
     SquareMatrix *result;
 
-    int resultTimes[MAX_THREADS];
-    float acceleration[MAX_THREADS];
-    float efficiency[MAX_THREADS];
+    int resultTimes[NUMBER_OF_MULTIPLY_TYPES][MAX_THREADS];
+    float acceleration[NUMBER_OF_MULTIPLY_TYPES][MAX_THREADS];
+    float efficiency[NUMBER_OF_MULTIPLY_TYPES][MAX_THREADS];
 
     cout << "Произведение матриц" << endl;
 
@@ -126,36 +126,57 @@ void MatrixMultiplication(int matrix_size, bool is_print_matrices){
 
 
     cout << "Однопоточная версия" << endl;
-    meanTime = 0;
-    for(i = 0; i < REPETITIONS; i++) {
-        start = chrono::system_clock::now();
-        result = matrix1->MatrixMultiply(matrix2);
-        end = chrono::system_clock::now();
-        meanTime += chrono::duration_cast<chrono::milliseconds>(end - start).count();
-        cout << "Норма матрицы: " << result->GetNorm() << endl;
-        delete result;
-    }
-    meanTime /= REPETITIONS;
-    cout << "Среднее время выполнения умножения: " << meanTime << "ms" << endl << endl;
-
-
-    cout << "Многопоточная версия" << endl;
     for(x = 0; x < NUMBER_OF_MULTIPLY_TYPES; x++) {
         cout << "Выриант алгоритма " << getTextForMatrixMultiplyType(x) << endl;
         meanTime = 0;
         for (i = 0; i < REPETITIONS; i++) {
             start = chrono::system_clock::now();
-            result = matrix1->MatrixMultiplyParallel(matrix2, MatrixMultiplyType(x));
+            result = matrix1->MatrixMultiply(matrix2, MatrixMultiplyType(x));
             end = chrono::system_clock::now();
             meanTime += chrono::duration_cast<chrono::milliseconds>(end - start).count();
             cout << "Норма матрицы: " << result->GetNorm() << endl;
-            if (is_print_matrices) {
-                cout << "Матрица C:\n" + result->ToString() << endl;
-            }
             delete result;
         }
         meanTime /= REPETITIONS;
-        cout << "Среднее время выполнения многопоточного умножения " << getTextForMatrixMultiplyType(x) << ": " << meanTime << "ms" << endl << endl;
+        cout << "Среднее время выполнения однопоточного умножения " << getTextForMatrixMultiplyType(x) << ": " << meanTime << "ms" << endl << endl;
+        resultTimes[x][0] = meanTime;
+        acceleration[x][0] = efficiency[x][0] = 1;
+    }
+
+    cout << "Многопоточная версия" << endl;
+    for(x = 0; x < NUMBER_OF_MULTIPLY_TYPES; x++) {
+        cout << "Выриант алгоритма " << getTextForMatrixMultiplyType(x) << endl;
+        for(y = 1; y < MAX_THREADS; y++) {
+            threads_number = y + 1;
+            meanTime = 0;
+            for (i = 0; i < REPETITIONS; i++) {
+                start = chrono::system_clock::now();
+                result = matrix1->MatrixMultiplyParallel(matrix2, MatrixMultiplyType(x), threads_number);
+                end = chrono::system_clock::now();
+                meanTime += chrono::duration_cast<chrono::milliseconds>(end - start).count();
+                cout << "Норма матрицы: " << result->GetNorm() << endl;
+                if (is_print_matrices) {
+                    cout << "Матрица C:\n" + result->ToString() << endl;
+                }
+                delete result;
+            }
+            meanTime /= REPETITIONS;
+            cout << "Среднее время выполнения многопоточного умножения " << getTextForMatrixMultiplyType(x) <<
+                    " (" << pluralizeThreads(threads_number) << "): " << meanTime << "ms" << endl << endl;
+
+            resultTimes[x][y] = meanTime;
+            acceleration[x][y] = (float)resultTimes[x][0]/resultTimes[x][y];
+            efficiency[x][y] = acceleration[x][y]/threads_number;
+        }
+    }
+
+
+    cout << "Результаты измерений" << endl;
+    for(x = 0; x < NUMBER_OF_MULTIPLY_TYPES; x++){
+        cout << "Вариант алгоритма " << getTextForMatrixMultiplyType(x) << endl;
+        cout << "Время выполнения: " << vectorToString(resultTimes[x], MAX_THREADS) << endl;
+        cout << "Коэффициент ускорения: " << vectorToString(acceleration[x], MAX_THREADS) << endl;
+        cout << "Коэффициент эффективности: " << vectorToString(efficiency[x], MAX_THREADS) << endl;
     }
 
     delete matrix1;
@@ -225,4 +246,9 @@ string vectorToString(float *vector, int size) {
     }
 
     return str;
+}
+
+string pluralizeThreads(int threads_number){
+    return  std::to_string(threads_number) +
+    " поток" + (threads_number == 1 ? "" : (threads_number > 1 && threads_number < 5) ? "а" : "ов");
 }
